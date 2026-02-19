@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEURAX TV - Final Permanent Build</title>
+    <!-- Font -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- HLS.js -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+    <style>
+        /* --- VARIABLES --- */
+        :root {
+            --bg-dark: #050507;
+            --bg-panel: #0f0f13;
+            --primary: #6366f1;
+            --accent: #ec4899;
+            --text-white: #ffffff;
+            --text-gray: #94a3b8;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --header-h: 65px;
+        }
+
+        /* --- RESET --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-white);
+            overflow-x: hidden;
+            scrollbar-width: none; 
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        /* --- SPLASH --- */
+        #splash {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-dark);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s;
+        }
+
+        .splash-logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .splash-logo span {
+            color: var(--primary);
+        }
+
+        .splash-bar {
+            width: 150px;
+            height: 3px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .splash-progress {
+            height: 100%;
+            background: var(--primary);
+            animation: load 1.5s ease-in-out forwards;
+        }
+
+        @keyframes load {
+            0% {
+                width: 0;
+            }
+
+            100% {
+                width: 100%;
+            }
+        }
+
+        /* --- HEADER --- */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--header-h);
+            background: rgba(5, 5, 7, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5%;
+            z-index: 1000;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .brand {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .brand span {
+            color: var(--primary);
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Search Bar */
+        .search-box {
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            transition: 0.3s;
+            width: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .search-box.active {
+            width: 200px;
+            opacity: 1;
+            padding: 5px 15px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: white;
+            width: 100%;
+            padding: 5px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .search-toggle {
+            background: none;
+            border: none;
+            color: var(--text-gray);
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .search-toggle:hover {
+            color: white;
+        }
+
+        /* Icon Buttons */
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .icon-btn:active {
+            background: var(--primary);
+            transform: scale(0.95);
+        }
+
+        /* --- MAIN LAYOUT --- */
+        .container {
+            display: flex;
+            margin-top: var(--header-h);
+            min-height: calc(100vh - var(--header-h));
+            position: relative;
+        }
+
+        /* --- SIDEBAR --- */
+        aside {
+            width: 250px;
+            background: var(--bg-panel);
+            height: 100%;
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            position: fixed;
+            left: 0;
+            top: var(--header-h);
+            z-index: 900;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-gray);
+            cursor: pointer;
+            transition: 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .menu-item:hover {
+            background: var(--glass);
+            color: white;
+        }
+
+        .menu-item.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+
+        .menu-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* --- CONTENT --- */
+        main {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+            position: relative;
+            transition: margin-left 0.3s;
+        }
+
+        /* --- HERO --- */
+        .hero {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: var(--accent);
+            filter: blur(80px);
+            opacity: 0.4;
+            border-radius: 50%;
+        }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .hero p {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            max-width: 80%;
+        }
+
+        .btn-play {
+            background: white;
+            color: black;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* --- GRID --- */
+        .section-head {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .grid {
+            display: grid;
+            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        }
+
+        .card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            transition: 0.2s;
+        }
+
+        .card img {
+            width: 70%;
+            transition: 0.3s;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        /* TEXT FALLBACK (Logo Rusak) */
+        .txt-fallback {
+            display: none;
+            position: absolute;
+            inset: 0;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: var(--bg-panel);
+            color: var(--primary);
+        }
+
+        .card:active {
+            transform: scale(0.98);
+            border-color: var(--primary);
+        }
+
+        .play-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .card:active .play-overlay {
+            opacity: 1;
+        }
+
+        .play-icon {
+            background: var(--primary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: var(--bg-panel);
+            width: 90%;
+            max-width: 400px;
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            transform: scale(0.9);
+            transition: 0.3s;
+        }
+
+        .modal-overlay.show .modal {
+            transform: scale(1);
+        }
+
+        .modal h3 {
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .modal input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 12px;
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .modal-btns {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            color: var(--text-gray);
+        }
+
+        .btn-confirm {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* About Modal Specifics */
+        .about-content {
+            text-align: center;
+            color: var(--text-gray);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .team-badge {
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        /* --- PLAYER FULLSCREEN --- */
+        .player-screen {
+            position: fixed;
+            inset: 0;
+            background: black;
+            z-index: 1500;
+            display: none;
+            flex-direction: column;
+        }
+
+        .player-screen.show {
+            display: flex;
+        }
+
+        .player-head {
+            padding: 15px;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+            position: absolute;
+            width: 100%;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .player-head img {
+            height: 30px;
+            background: white;
+            padding: 2px;
+            border-radius: 3px;
+        }
+
+        .p-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .p-title {
+            font-weight: 700;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .p-quality {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- TOAST --- */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(50px);
+            background: rgba(30, 30, 35, 0.95);
+            border: 1px solid var(--primary);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* --- RESPONSIVE MOBILE FIXES --- */
+        @media (min-width: 769px) {
+            .search-box {
+                width: 200px;
+                opacity: 1;
+                padding: 5px 15px;
+            }
+
+            /* Always show on desktop */
+            .search-toggle {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            aside {
+                left: -280px;
+                box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+            }
+
+            aside.active {
+                left: 0;
+            }
+
+            main {
+                margin-left: 0;
+                padding: 15px;
+            }
+
+            .menu-btn {
+                display: block;
+            }
+
+            .hero {
+                padding: 20px;
+            }
+
+            .hero h1 {
+                font-size: 1.4rem;
+            }
+
+            /* MOBILE GRID: RAPI 2 KOLOM */
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .card {
+                aspect-ratio: 16/9;
+            }
+
+            .card img {
+                width: 75%;
+            }
+
+            .txt-fallback {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Splash Screen -->
+    <div id="splash">
+        <div class="splash-logo">NEURAX <span>TV</span></div>
+        <div class="splash-bar">
+            <div class="splash-progress"></div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-left">
+            <button class="menu-btn" id="menuToggle"><i class="fa-solid fa-bars"></i></button>
+            <div class="brand">NEURAX <span>TV</span></div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px;">
+            <!-- Search Feature -->
+            <button class="search-toggle" id="searchToggle"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <div class="search-box" id="searchBox">
+                <i class="fa-solid fa-magnifying-glass" style="color:#666; font-size:0.8rem;"></i>
+                <input type="text" id="searchInput" placeholder="Cari Channel...">
+            </div>
+
+            <button class="icon-btn" title="Upload File" onclick="document.getElementById('fileIn').click()">
+                <i class="fa-solid fa-folder-open"></i>
+            </button>
+            <input type="file" id="fileIn" accept=".m3u,.m3u8" style="display:none">
+
+            <button class="icon-btn" title="Tambah URL" id="urlBtn">
+                <i class="fa-solid fa-link"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="menu-item active" data-cat="all"><i class="fa-solid fa-compass"></i> Semua</div>
+            <div class="menu-item" data-cat="Lokal"><i class="fa-solid fa-flag"></i> Indonesia</div>
+            <div class="menu-item" data-cat="News"><i class="fa-solid fa-newspaper"></i> Berita</div>
+            <div class="menu-item" data-cat="Sports"><i class="fa-solid fa-basketball"></i> Olahraga</div>
+            <div class="menu-item" data-cat="Movies"><i class="fa-solid fa-film"></i> Film</div>
+            <div class="menu-item" data-cat="Music"><i class="fa-solid fa-music"></i> Musik</div>
+            <div style="margin-top: 20px; border-top: 1px solid var(--border);"></div>
+            <div class="menu-item" id="aboutBtn"><i class="fa-solid fa-circle-info"></i> Tentang Aplikasi</div>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="mainContent">
+            <div class="hero">
+                <h1>NEURAX TV</h1>
+                <p>Streaming TV Digital berkualitas tinggi dengan teknologi Adaptive Bitrate. Rapi, Cepat, dan Gratis.
+                </p>
+                <button class="btn-play" onclick="playHero()"><i class="fa-solid fa-play"></i> Putar
+                    Rekomendasi</button>
+            </div>
+
+            <div class="section-head">
+                <span id="pageTitle">Katalog</span>
+            </div>
+
+            <div class="grid" id="channelGrid">
+                <!-- Generated by JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Player Fullscreen -->
+    <div class="player-screen" id="playerScreen">
+        <div class="player-head">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <img src="" id="pLogo">
+                <div class="p-info">
+                    <div class="p-title" id="pName">Title</div>
+                    <div class="p-quality" id="pQuality">HD AUTO</div>
+                </div>
+            </div>
+            <button class="close-btn" id="closePlayer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <video id="videoEl" controls autoplay playsinline></video>
+    </div>
+
+    <!-- URL Modal -->
+    <div class="modal-overlay" id="urlModal">
+        <div class="modal">
+            <h3>Tambah URL Playlist</h3>
+            <input type="text" id="urlInput" placeholder="https://example.com/playlist.m3u">
+            <div class="modal-btns">
+                <button class="btn btn-cancel" id="closeUrl">Batal</button>
+                <button class="btn btn-confirm" id="loadUrl">Muat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div class="modal-overlay" id="aboutModal">
+        <div class="modal">
+            <div style="text-align:center; margin-bottom:20px;">
+                <i class="fa-solid fa-rocket" style="font-size: 2rem; color: var(--primary);"></i>
+                <h3>TENTANG KAMI</h3>
+            </div>
+            <div class="about-content">
+                <span class="team-badge">NEURAX TV ABOUT</span>
+                <p>Menciptakan pengalaman digital terbaik dengan standar industri modern. Neurax TV Pro adalah bukti
+                    dedikasi kami dalam UI/UX dan performa.</p>
+                    <h3>Muhammad Fauzil Adhim</h3>
+                <p style="font-size:0.8rem; color:#666;">(CEO Neurax Inc)</p>
+            </div>
+            <button class="btn btn-confirm" style="width:100%"
+                onclick="document.getElementById('aboutModal').classList.remove('show')">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span id="toastMsg">Info</span></div>
+
+    <script>
+        // --- DATA ---
+        const defaults = [
+            { name: "Trans 7", logo: "https://upload.wikimedia.org/wikipedia/commons/b/b1/TVRI_Logo.png", group: "Lokal", url: "https://video.detik.com/trans7/smil:trans7.smil/index.m3u8" },
+            { name: "TVRI Sport", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/CNN_Indonesia.svg/1200px-CNN_Indonesia.svg.png", group: "News", url: "https://ott-balancer.tvri.go.id/live/eds/SportHD/hls/SportHD.m3u8" },
+            { name: "MNCTV", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/DW-logo.svg/1200px-DW-logo.svg.png", group: "News", url: "https://allcutv.rctiplus.id/mnctv2023.m3u8" },
+            { name: "GTV", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA_logo.svg/1200px-NASA_logo.svg.png", group: "Science", url: "https://allcutv.rctiplus.id/gtv2023.m3u8" },
+            { name: "RCTI", logo: "https://upload.wikimedia.org/wikipedia/commons/7/7a/Fashion_TV_logo.png", group: "Lifestyle", url: "https://allcutv.rctiplus.id/rcti2023.m3u8" },
+            { name: "Al Jazeera", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f2/Aljazeera.svg/1200px-Aljazeera.svg.png", group: "News", url: "https://live-hls-web-aje.getaj.net/AJE/03.m3u8" },
+            { name: "BeIn Sports", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/BeIN_Sports_1_logo.svg/1200px-BeIN_Sports_1_logo.svg.png", group: "Sports", url: "https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index_5.m3u8" },
+            { name: "Da Vinci", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Da_Vinci_Learning_Logo.svg/1200px-Da_Vinci_Learning_Logo.svg.png", group: "Kids", url: "https://cdn01.qa.neterra.net/kanali1/davinci.m3u8" }
+        ];
+
+        let channels = [...defaults];
+        let hls = null;
+        let featured = null;
+
+        // --- CONFIGURATION ULTRA ADAPTIVE ---
+        const hlsConfig = {
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: 90,
+            maxBufferLength: 60,
+            maxMaxBufferLength: 120,
+            abrEwmaFastLive: 3.0,
+            abrEwmaSlowLive: 9.0,
+            abrBandWidthFactor: 0.95,
+            abrBandWidthUpFactor: 0.7,
+            abrMaxWithRealBitrate: true
+        };
+
+        // --- INIT ---
+        window.onload = () => {
+            setTimeout(() => {
+                document.getElementById('splash').style.opacity = '0';
+                setTimeout(() => document.getElementById('splash').remove(), 500);
+            }, 1500);
+            init();
+        };
+
+        function init() {
+            featured = channels[Math.floor(Math.random() * channels.length)];
+            render(channels);
+            setupEvents();
+        }
+
+        // --- RENDER ---
+        function render(list) {
+            const grid = document.getElementById('channelGrid');
+            grid.innerHTML = '';
+            if (!list.length) { grid.innerHTML = '<div style="color:#666; grid-column:1/-1; text-align:center; padding:20px;">Tidak ditemukan</div>'; return; }
+
+            list.forEach(ch => {
+                const el = document.createElement('div');
+                el.className = 'card';
+                el.onclick = () => play(ch);
+                // LOGIKA FALLBACK LOGO: Jika gambar error, sembunyikan gambar, tampilkan teks
+                el.innerHTML = `
+                    <img src="${ch.logo}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                    <div class="txt-fallback">${ch.name}</div>
+                    <div class="play-overlay"><div class="play-icon"><i class="fa-solid fa-play"></i></div></div>
+                `;
+                grid.appendChild(el);
+            });
+        }
+
+        // --- LOGIC ---
+        function setupEvents() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            // Mobile Toggle
+            document.getElementById('menuToggle').onclick = () => sidebar.classList.toggle('active');
+
+            // Close sidebar when clicking main content (Mobile)
+            mainContent.onclick = () => {
+                if (window.innerWidth <= 768) sidebar.classList.remove('active');
+            };
+
+            // SEARCH LOGIC
+            document.getElementById('searchToggle').onclick = () => {
+                document.getElementById('searchBox').classList.toggle('active');
+                if (document.getElementById('searchBox').classList.contains('active')) {
+                    document.getElementById('searchInput').focus();
+                }
+            };
+            document.getElementById('searchInput').oninput = (e) => {
+                const q = e.target.value.toLowerCase();
+                render(channels.filter(c => c.name.toLowerCase().includes(q)));
+            };
+
+            // Category
+            document.querySelectorAll('.menu-item[data-cat]').forEach(el => {
+                el.onclick = function () {
+                    document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    const cat = this.dataset.cat;
+                    document.getElementById('pageTitle').innerText = this.innerText;
+                    render(cat === 'all' ? channels : channels.filter(c => c.group.includes(cat)));
+                    if (window.innerWidth <= 768) sidebar.classList.remove('active');
+                };
+            });
+
+            // Player
+            document.getElementById('closePlayer').onclick = () => {
+                document.getElementById('playerScreen').classList.remove('show');
+                document.getElementById('videoEl').pause();
+            };
+
+            // URL Modal
+            document.getElementById('urlBtn').onclick = () => document.getElementById('urlModal').classList.add('show');
+            document.getElementById('closeUrl').onclick = () => document.getElementById('urlModal').classList.remove('show');
+            document.getElementById('urlModal').onclick = (e) => { if (e.target.id === 'urlModal') e.target.classList.remove('show'); };
+
+            document.getElementById('loadUrl').onclick = async () => {
+                const url = document.getElementById('urlInput').value;
+                if (!url) return showToast("URL Kosong");
+                showToast("Memuat...");
+                try {
+                    const r = await fetch(url);
+                    const t = await r.text();
+                    parse(t);
+                    document.getElementById('urlModal').classList.remove('show');
+                } catch { showToast("Gagal Fetch URL"); }
+            };
+
+            // File Modal
+            document.getElementById('fileIn').onchange = (e) => {
+                const f = e.target.files[0];
+                if (!f) return;
+                const r = new FileReader();
+                r.onload = (evt) => parse(evt.target.result);
+                r.readAsText(f);
+            };
+
+            // About Modal
+            document.getElementById('aboutBtn').onclick = () => {
+                document.getElementById('aboutModal').classList.add('show');
+                if (window.innerWidth <= 768) sidebar.classList.remove('active');
+            };
+        }
+
+        function play(ch) {
+            const v = document.getElementById('videoEl');
+            document.getElementById('playerScreen').classList.add('show');
+            document.getElementById('pName').innerText = ch.name;
+            document.getElementById('pLogo').src = ch.logo;
+            document.getElementById('pQuality').innerText = "Connecting...";
+
+            if (hls) hls.destroy();
+
+            if (Hls.isSupported() && ch.url.includes('.m3u8')) {
+                // Gunakan konfigurasi Ultra Adaptive
+                hls = new Hls(hlsConfig);
+                hls.loadSource(ch.url);
+                hls.attachMedia(v);
+
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    v.play();
+                    updateQualityDisplay();
+                });
+
+                hls.on(Hls.Events.LEVEL_SWITCHED, () => {
+                    updateQualityDisplay();
+                });
+            } else {
+                v.src = ch.url;
+                v.play();
+                document.getElementById('pQuality').innerText = "DIRECT";
+            }
+        }
+
+        function playHero() { if (featured) play(featured); }
+
+        function updateQualityDisplay() {
+            if (!hls) return;
+            const level = hls.levels[hls.currentLevel];
+            const qualityEl = document.getElementById('pQuality');
+
+            if (!level) {
+                qualityEl.innerText = "AUTO (Adaptive)";
+                qualityEl.style.color = "var(--primary)";
+            } else {
+                const h = level.height;
+                qualityEl.innerText = `${h}p`;
+                qualityEl.style.color = h >= 720 ? "#22c55e" : h >= 480 ? "#eab308" : "#ef4444";
+            }
+        }
+
+        function parse(txt) {
+            const lines = txt.split('\n');
+            const res = [];
+            let curr = {};
+            lines.forEach(l => {
+                l = l.trim();
+                if (!l) return;
+                if (l.startsWith('#EXTINF:')) {
+                    const n = l.split(',').pop();
+                    const g = l.match(/group-title="([^"]*)"/)?.[1] || 'Umum';
+                    const logo = l.match(/tvg-logo="([^"]*)"/)?.[1];
+                    curr = { name: n.trim(), group: g, logo };
+                } else if (!l.startsWith('#')) {
+                    curr.url = l;
+                    if (curr.name && curr.url) res.push(curr);
+                    curr = {};
+                }
+            });
+            if (res.length) {
+                channels = res;
+                render(channels);
+                showToast(`Berhasil: ${res.length} Channel`);
+                featured = res[0];
+            } else { showToast("Gagal Parse"); }
+        }
+
+        function showToast(m) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = m;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+
+</html>
